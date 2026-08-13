@@ -104,7 +104,47 @@ const deleteProduct = async (req, res) => {
     });
   }
 };
+const getProductStats = async (req, res) => {
+  try {
+    const totalProducts = await Product.countDocuments();
 
+    const products = await Product.find();
+
+    const totalInventoryValue = products.reduce(
+      (sum, product) => sum + product.price * product.quantity,
+      0
+    );
+
+    res.status(200).json({
+      success: true,
+      totalProducts,
+      totalInventoryValue,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+const getLowStockProducts = async (req, res) => {
+  try {
+    const products = await Product.find({
+      $expr: {
+        $lte: ["$quantity", "$lowStockThreshold"],
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
 
 module.exports = {
   addProduct,
@@ -112,4 +152,6 @@ module.exports = {
   getProductById,
   updateProduct,
   deleteProduct,
+  getProductStats,
+  getLowStockProducts,
 };
